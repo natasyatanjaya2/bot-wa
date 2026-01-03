@@ -46,12 +46,18 @@ export default {
 };
 
 const start = async () => {
-    db = await mysql.createConnection({
-        host: '127.0.0.1',
-        user: 'user_program',
-        password: 'mysql',
-        database: 'program_toko',
-        port: 3307
+    const db = mysql.createPool({
+      host: process.env.DB_HOST,
+      port: process.env.DB_PORT,
+      user: process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+      database: process.env.DB_NAME,
+      waitForConnections: true,
+      connectionLimit: 10,
+      queueLimit: 0,
+      ssl: {
+        rejectUnauthorized: false
+      }
     });
 
     const { state, saveCreds } = await useMultiFileAuthState('./auth');
@@ -1040,5 +1046,6 @@ Contoh penggunaan:
 
     app.listen(3000, () => console.log('✅ Server aktif di http://localhost:3000'));
 };
+
 
 start();
