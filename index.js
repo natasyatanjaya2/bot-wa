@@ -137,33 +137,28 @@ async function startBot() {
 // =======================
 // LOGOUT + FORCE NEW QR
 // =======================
-app.post("/logout", async (req, res) => {
+app.get("/logout", async (req, res) => {
   try {
     if (!sockInstance) {
-      return res.json({ status: "No active WhatsApp session" });
+      return res.send("No active WhatsApp session");
     }
 
     console.log("🚪 Logging out WhatsApp...");
 
-    // logout resmi dari WhatsApp
-    await sockInstance.logout();
+    await sockInstance.logout(); // WAJIB
 
-    // reset state
     latestQR = null;
     if (qrTimer) clearTimeout(qrTimer);
 
-    res.json({
-      status: "Logged out successfully. QR will regenerate."
-    });
+    res.send("Logged out. QR will regenerate.");
 
-    // start ulang bot → trigger QR baru
     setTimeout(() => {
       startBot();
     }, 2000);
 
   } catch (err) {
     console.error("Logout error:", err);
-    res.status(500).json({ error: err.message });
+    res.status(500).send(err.message);
   }
 });
 
@@ -186,4 +181,5 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log("🌐 Server running on port", PORT);
 });
+
 
