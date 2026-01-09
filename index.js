@@ -20,6 +20,7 @@ app.use(express.json());
 let latestQR = null;
 let sockInstance = null;
 let qrTimer = null;
+let isRestarting = false;
 
 // =======================
 // QR PAGE
@@ -99,18 +100,29 @@ async function startBot() {
       const statusCode = lastDisconnect?.error?.output?.statusCode;
       console.log("❌ Connection closed:", statusCode);
     
-      if (statusCode === DisconnectReason.loggedOut) {
-        console.log("🔁 Logged out, restarting bot for new QR...");
+      if (
+        statusCode === DisconnectReason.loggedOut &&
+        !isRestarting
+      ) {
+        isRestarting = true;
+    
+        console.log("🧹 Logged out detected. Reinitializing bot...");
+    
+        // ⛔ PENTING: matikan process socket lama
+        sockInstance = null;
+    
         setTimeout(() => {
-          startBot(); // ⬅️ DI SINI TEMPATNYA
-        }, 2000);
+          isRestarting = false;
+          startBot(); // ⬅️ BARU DI SINI
+        }, 3000);
+    
         return;
       }
     
+      // reconnect biasa (network issue)
       setTimeout(() => {
-        console.log("🔄 Reconnecting bot...");
         startBot();
-      }, 3000);
+      }, 5000);
     }
   });
 
@@ -145,16 +157,18 @@ app.get("/logout", async (req, res) => {
 
     console.log("🚪 Logging out WhatsApp...");
 
-    await sockInstance.logout(); // revoke device resmi
+    await sockInstance.logout();
 
-    // reset state
     latestQR = null;
     if (qrTimer) clearTimeout(qrTimer);
 
-    res.send("Logged out");
+    res.send("Logged out. Restarting bot for new QR...");
+
+    // ⛔ JANGAN startBot DI SINI
+    // ⛔ JANGAN reconnect socket lama
 
   } catch (err) {
-    console.error("Logout error:", err);
+    console.error(err);
     res.status(500).send(err.message);
   }
 });
@@ -178,6 +192,7 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log("🌐 Server running on port", PORT);
 });
+
 
 
 
