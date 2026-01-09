@@ -98,15 +98,15 @@ async function startBot() {
     if (connection === "close") {
       const statusCode = lastDisconnect?.error?.output?.statusCode;
       console.log("❌ Connection closed:", statusCode);
-
-      if (
-        statusCode === DisconnectReason.loggedOut ||
-        statusCode === 401
-      ) {
-        console.log("⚠️ Logged out. Delete auth folder and scan QR again.");
+    
+      if (statusCode === DisconnectReason.loggedOut) {
+        console.log("🔁 Logged out, restarting bot for new QR...");
+        setTimeout(() => {
+          startBot(); // ⬅️ DI SINI TEMPATNYA
+        }, 2000);
         return;
       }
-
+    
       setTimeout(() => {
         console.log("🔄 Reconnecting bot...");
         startBot();
@@ -145,16 +145,13 @@ app.get("/logout", async (req, res) => {
 
     console.log("🚪 Logging out WhatsApp...");
 
-    await sockInstance.logout(); // WAJIB
+    await sockInstance.logout(); // revoke device resmi
 
+    // reset state
     latestQR = null;
     if (qrTimer) clearTimeout(qrTimer);
 
-    res.send("Logged out. QR will regenerate.");
-
-    setTimeout(() => {
-      startBot();
-    }, 2000);
+    res.send("Logged out");
 
   } catch (err) {
     console.error("Logout error:", err);
@@ -181,5 +178,6 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log("🌐 Server running on port", PORT);
 });
+
 
 
