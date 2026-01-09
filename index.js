@@ -10,6 +10,8 @@ import {
 import express from "express";
 import pino from "pino";
 import QRCode from "qrcode";
+import fs from "fs";
+let forceNewQR = false;
 
 const app = express();
 app.use(express.json());
@@ -100,27 +102,40 @@ async function startBot() {
       const statusCode = lastDisconnect?.error?.output?.statusCode;
       console.log("❌ Connection closed:", statusCode);
     
-      if (
-        statusCode === DisconnectReason.loggedOut &&
-        !isRestarting
-      ) {
-        isRestarting = true;
+      // =======================
+      // LOGOUT → DELETE AUTH
+      // =======================
+      if (statusCode === DisconnectReason.loggedOut && forceNewQR) {
+        console.log("🧹 Deleting auth folder...");
     
-        console.log("🧹 Logged out detected. Reinitializing bot...");
+        try {
+          if (fs.existsSync("./auth")) {
+            fs.rmSync("./auth", { recursive: true, force: true });
+            console.log("✅ Auth folder deleted");
+          }
+        } catch (e) {
+          console.error("Auth delete error:", e);
+        }
     
-        // ⛔ PENTING: matikan process socket lama
+        // reset state
+        latestQR = null;
+        forceNewQR = false;
         sockInstance = null;
     
+        // ⏳ tunggu filesystem settle
         setTimeout(() => {
-          isRestarting = false;
-          startBot(); // ⬅️ BARU DI SINI
+          console.log("🔁 Restarting bot for new QR...");
+          startBot();
         }, 3000);
     
         return;
       }
     
-      // reconnect biasa (network issue)
+      // =======================
+      // NORMAL RECONNECT
+      // =======================
       setTimeout(() => {
+        console.log("🔄 Reconnecting bot...");
         startBot();
       }, 5000);
     }
@@ -152,20 +167,15 @@ async function startBot() {
 app.get("/logout", async (req, res) => {
   try {
     if (!sockInstance) {
-      return res.send("No active WhatsApp session");
+      return res.send("No active session");
     }
 
-    console.log("🚪 Logging out WhatsApp...");
+    console.log("🚪 Logout requested");
+    forceNewQR = true;
 
-    await sockInstance.logout();
+    await sockInstance.logout(); // trigger loggedOut
 
-    latestQR = null;
-    if (qrTimer) clearTimeout(qrTimer);
-
-    res.send("Logged out. Restarting bot for new QR...");
-
-    // ⛔ JANGAN startBot DI SINI
-    // ⛔ JANGAN reconnect socket lama
+    res.send("Logged out. Generating new QR...");
 
   } catch (err) {
     console.error(err);
@@ -192,6 +202,7 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log("🌐 Server running on port", PORT);
 });
+
 
 
 
