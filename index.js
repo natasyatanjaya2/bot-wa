@@ -23,6 +23,36 @@ let latestQR = null;
 let sockInstance = null;
 let qrTimer = null;
 let isRestarting = false;
+let userId = 1;
+
+async function getOrderOnlineStatus(userId) {
+  try {
+    const res = await fetch(
+      `https://backend-bot-wa.natasyatanjaya2.workers.dev/order-settings?user_id=${userId}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          // optional kalau pakai API key
+          // "x-api-key": process.env.WORKER_API_KEY
+        }
+      }
+    );
+
+    if (!res.ok) {
+      console.error("Worker response error:", res.status);
+      return false;
+    }
+
+    const data = await res.json();
+
+    return data.order_online_enabled === true;
+
+  } catch (err) {
+    console.error("Fetch worker error:", err);
+    return false;
+  }
+}
 
 // =======================
 // QR PAGE
@@ -202,6 +232,7 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log("🌐 Server running on port", PORT);
 });
+
 
 
 
