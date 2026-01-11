@@ -348,7 +348,7 @@ async function startBot() {
         }
       }).join("\n");
     
-      const namaToko = await loadNamaToko(userId);
+      const namaToko = await getLoadNamaToko(userId);
     
       const pesan =
         `🕐 *Jam Operasional ${namaToko}*\n` +
@@ -402,6 +402,7 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log("🌐 Server running on port", PORT);
 });
+
 
 
 
