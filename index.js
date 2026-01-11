@@ -399,8 +399,12 @@ async function startBot() {
     // cek command menu
     const isMenuCommand = isi === "/menu" || isi === "/start";
     
-    // cek greeting (mengandung kata sapaan)
-    const isGreeting = greetings.some(g => isi.includes(g));
+    // greeting HARUS kata utuh & pesan pendek
+    const isGreeting =
+      greetings.includes(isi) ||        // "hi"
+      greetings.some(g => isi === `${g}!`) ||
+      greetings.some(g => isi === `${g}.`) ||
+      greetings.some(g => isi === `${g},`);
     
     if (isMenuCommand || isGreeting) {
       await kirimMenuUtama(sock, sender, userId);
@@ -610,6 +614,7 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log("🌐 Server running on port", PORT);
 });
+
 
 
 
