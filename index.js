@@ -103,6 +103,37 @@ async function getInfoToko(userId) {
   }
 }
 
+function intToTime(value) {
+  if (!value || value === 0) return "00:00";
+
+  const str = value.toString().padStart(4, "0");
+  const jam = str.slice(0, 2);
+  const menit = str.slice(2, 4);
+
+  return `${jam}:${menit}`;
+}
+
+async function getSettingsJamOperasional(userId) {
+  try {
+    const res = await fetch(
+      `https://backend-bot-wa.natasyatanjaya2.workers.dev/settings-jam-operasional?user_id=${userId}`,
+      {
+        headers: {
+          "Content-Type": "application/json"
+          // "x-api-key": process.env.WORKER_API_KEY
+        }
+      }
+    );
+
+    if (!res.ok) return [];
+    return await res.json();
+
+  } catch (err) {
+    console.error("Fetch jam operasional error:", err);
+    return [];
+  }
+}
+
 async function kirimMenuUtama(sock, sender, userId) {
   // ambil data dari Cloudflare Worker
   const [orderOnlineEnabled, namaToko] = await Promise.all([
@@ -297,6 +328,36 @@ async function startBot() {
     
       return await sock.sendMessage(sender, { text: pesan });
     }
+
+    if (text.startsWith("/jamoperasional")) {
+      const jamOperasional = await getSettingsJamOperasional(userId);
+    
+      if (jamOperasional.length === 0) {
+        return await sock.sendMessage(sender, {
+          text: "⚠️ Jadwal operasional belum diatur."
+        });
+      }
+    
+      const daftar = jamOperasional.map(row => {
+        if (row.aktif) {
+          const buka = intToTime(row.jam_buka);
+          const tutup = intToTime(row.jam_tutup);
+          return `📅 *${row.hari}*: ${buka} - ${tutup}`;
+        } else {
+          return `📅 *${row.hari}*: ❌ *Tutup*`;
+        }
+      }).join("\n");
+    
+      const namaToko = await loadNamaToko(userId);
+    
+      const pesan =
+        `🕐 *Jam Operasional ${namaToko}*\n` +
+        `Berikut adalah jadwal buka toko:\n\n` +
+        `${daftar}\n\n` +
+        `📌 Jadwal dapat berubah sewaktu-waktu.`;
+    
+      return await sock.sendMessage(sender, { text: pesan });
+    }
   });
 }
 
@@ -341,6 +402,7 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log("🌐 Server running on port", PORT);
 });
+
 
 
 
