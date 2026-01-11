@@ -159,6 +159,27 @@ async function getCariProduk(userId, keyword) {
   }
 }
 
+async function getCariKategori(userId, keyword) {
+  try {
+    const res = await fetch(
+      `https://backend-bot-wa.natasyatanjaya2.workers.dev/cari-kategori?user_id=${userId}&q=${encodeURIComponent(keyword)}`,
+      {
+        headers: {
+          "Content-Type": "application/json"
+          // "x-api-key": process.env.WORKER_API_KEY
+        }
+      }
+    );
+
+    if (!res.ok) return [];
+    return await res.json();
+
+  } catch (err) {
+    console.error("Cari kategori error:", err);
+    return [];
+  }
+}
+
 async function kirimMenuUtama(sock, sender, userId) {
   // ambil data dari Cloudflare Worker
   const [orderOnlineEnabled, namaToko] = await Promise.all([
@@ -412,6 +433,35 @@ async function startBot() {
     
       return await sock.sendMessage(sender, { text: pesan });
     }
+
+    if (text.startsWith("/carikategori")) {
+      const kata = text.replace("/carikategori", "").trim().toLowerCase();
+    
+      if (!kata) {
+        return await sock.sendMessage(sender, {
+          text: "📂 Contoh: /carikategori oli"
+        });
+      }
+    
+      const kategori = await getCariKategori(userId, kata);
+    
+      if (kategori.length === 0) {
+        return await sock.sendMessage(sender, {
+          text: `🔍 Kategori dengan kata "${kata}" tidak ditemukan.`
+        });
+      }
+    
+      const daftar = kategori
+        .map((k, i) => `${i + 1}. ${k.nama}`)
+        .join("\n");
+    
+      const pesan =
+        `📂 *Hasil Pencarian Kategori: "${kata}" (${kategori.length} ditemukan)*\n\n` +
+        daftar;
+    
+      return await sock.sendMessage(sender, { text: pesan });
+    }
+
   });
 }
 
@@ -456,6 +506,7 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log("🌐 Server running on port", PORT);
 });
+
 
 
 
