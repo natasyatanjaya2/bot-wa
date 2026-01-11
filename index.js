@@ -54,6 +54,33 @@ async function getOrderOnlineStatus(userId) {
   }
 }
 
+async function getLoadNamaToko(userId) {
+  try {
+    const res = await fetch(
+      `https://backend-bot-wa.natasyatanjaya2.workers.dev/load-nama-toko?user_id=${userId}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          // "x-api-key": process.env.WORKER_API_KEY // optional
+        }
+      }
+    );
+
+    if (!res.ok) {
+      console.error("Worker error:", res.status);
+      return "Toko";
+    }
+
+    const data = await res.json();
+    return data.nama_toko;
+
+  } catch (err) {
+    console.error("Fetch nama toko error:", err);
+    return "Toko";
+  }
+}
+
 // =======================
 // QR PAGE
 // =======================
@@ -232,3 +259,4 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log("🌐 Server running on port", PORT);
 });
+
