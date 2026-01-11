@@ -279,7 +279,7 @@ async function startBot() {
       await kirimMenuUtama(sock, sender, userId);
     }
 
-    if (isiPesan.startsWith("/infotoko")) {
+    if (text.startsWith("/infotoko")) {
       const infoToko = await getInfoToko(userId);
     
       if (!infoToko) {
@@ -341,6 +341,7 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log("🌐 Server running on port", PORT);
 });
+
 
 
 
