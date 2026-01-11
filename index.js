@@ -201,6 +201,27 @@ async function getCariMerek(userId, keyword) {
   }
 }
 
+async function getRekomendasiProduk(userId) {
+  try {
+    const res = await fetch(
+      `https://backend-bot-wa.natasyatanjaya2.workers.dev/rekomendasi-produk?user_id=${userId}`,
+      {
+        headers: {
+          "Content-Type": "application/json"
+          // "x-api-key": process.env.WORKER_API_KEY
+        }
+      }
+    );
+
+    if (!res.ok) return [];
+    return await res.json();
+
+  } catch (err) {
+    console.error("Rekomendasi produk error:", err);
+    return [];
+  }
+}
+
 async function kirimMenuUtama(sock, sender, userId) {
   // ambil data dari Cloudflare Worker
   const [orderOnlineEnabled, namaToko] = await Promise.all([
@@ -510,6 +531,29 @@ async function startBot() {
     
       return await sock.sendMessage(sender, { text: pesan });
     }
+
+    if (text.startsWith("/rekomendasiproduk")) {
+      const produk = await getRekomendasiProduk(userId);
+    
+      if (produk.length === 0) {
+        return await sock.sendMessage(sender, {
+          text: "❌ Belum ada data pembelian bulan ini."
+        });
+      }
+    
+      let pesan = produk.length < 3
+        ? `📊 *Hanya ${produk.length} produk terjual bulan ini*\n\n`
+        : `🔥 *10 Produk Terlaris Bulan Ini*\n\n`;
+    
+      pesan += produk.map((p, i) =>
+        `${i + 1}. *${p.nama}*\n` +
+        `Terjual: ${p.total_terjual}x\n` +
+        `Stok: ${p.stok} | ${p.kategori} • ${p.merek}\n` +
+        `Harga: ${Number(p.harga_jual).toLocaleString()}\n`
+      ).join("\n\n");
+    
+      return await sock.sendMessage(sender, { text: pesan });
+    }
   });
 }
 
@@ -554,6 +598,7 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log("🌐 Server running on port", PORT);
 });
+
 
 
 
