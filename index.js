@@ -245,6 +245,9 @@ async function startBot() {
     const msg = messages[0];
     if (!msg?.message) return;
 
+    // ✅ DEFINISIKAN sender
+    const sender = msg.key.remoteJid;
+
     const text =
       msg.message.conversation ||
       msg.message.extendedTextMessage?.text ||
@@ -297,5 +300,6 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log("🌐 Server running on port", PORT);
 });
+
 
 
