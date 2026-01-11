@@ -180,6 +180,27 @@ async function getCariKategori(userId, keyword) {
   }
 }
 
+async function getCariMerek(userId, keyword) {
+  try {
+    const res = await fetch(
+      `https://backend-bot-wa.natasyatanjaya2.workers.dev/cari-merek?user_id=${userId}&q=${encodeURIComponent(keyword)}`,
+      {
+        headers: {
+          "Content-Type": "application/json"
+          // "x-api-key": process.env.WORKER_API_KEY
+        }
+      }
+    );
+
+    if (!res.ok) return [];
+    return await res.json();
+
+  } catch (err) {
+    console.error("Cari merek error:", err);
+    return [];
+  }
+}
+
 async function kirimMenuUtama(sock, sender, userId) {
   // ambil data dari Cloudflare Worker
   const [orderOnlineEnabled, namaToko] = await Promise.all([
@@ -462,6 +483,33 @@ async function startBot() {
       return await sock.sendMessage(sender, { text: pesan });
     }
 
+    if (text.startsWith("/carimerek")) {
+      const kata = text.replace("/carimerek", "").trim().toLowerCase();
+    
+      if (!kata) {
+        return await sock.sendMessage(sender, {
+          text: "🏷️ Contoh: /carimerek honda"
+        });
+      }
+    
+      const merek = await getCariMerek(userId, kata);
+    
+      if (merek.length === 0) {
+        return await sock.sendMessage(sender, {
+          text: `🔍 Merek dengan kata "${kata}" tidak ditemukan.`
+        });
+      }
+    
+      const daftar = merek
+        .map((m, i) => `${i + 1}. ${m.nama}`)
+        .join("\n");
+    
+      const pesan =
+        `🏷️ *Hasil Pencarian Merek: "${kata}" (${merek.length} ditemukan)*\n\n` +
+        daftar;
+    
+      return await sock.sendMessage(sender, { text: pesan });
+    }
   });
 }
 
@@ -506,6 +554,7 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log("🌐 Server running on port", PORT);
 });
+
 
 
 
