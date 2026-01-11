@@ -138,6 +138,27 @@ async function getSettingsJamOperasional(userId) {
   }
 }
 
+async function getCariProduk(userId, keyword) {
+  try {
+    const res = await fetch(
+      `https://backend-bot-wa.natasyatanjaya2.workers.dev/cari-produk?user_id=${userId}&q=${encodeURIComponent(keyword)}`,
+      {
+        headers: {
+          "Content-Type": "application/json"
+          // "x-api-key": process.env.WORKER_API_KEY
+        }
+      }
+    );
+
+    if (!res.ok) return [];
+    return await res.json();
+
+  } catch (err) {
+    console.error("Cari produk error:", err);
+    return [];
+  }
+}
+
 async function kirimMenuUtama(sock, sender, userId) {
   // ambil data dari Cloudflare Worker
   const [orderOnlineEnabled, namaToko] = await Promise.all([
@@ -359,6 +380,39 @@ async function startBot() {
     
       return await sock.sendMessage(sender, { text: pesan });
     }
+
+    if (isiPesan.startsWith("/cariproduk")) {
+      const kata = isiPesan.replace("/cariproduk", "").trim().toLowerCase();
+    
+      if (!kata) {
+        return await sock.sendMessage(sender, {
+          text: "🔍 Contoh: /cariproduk oli"
+        });
+      }
+    
+      const produk = await cariProdukFromWorker(userId, kata);
+    
+      if (produk.length === 0) {
+        return await sock.sendMessage(sender, {
+          text: `🔍 Produk dengan kata "${kata}" tidak ditemukan.`
+        });
+      }
+    
+      const daftar = produk.map((p, i) =>
+        `${i + 1}. *${p.nama}*\n` +
+        `Kategori: ${p.kategori}\n` +
+        `Merek: ${p.merek}\n` +
+        `Stok: ${p.stok}\n` +
+        `Harga: ${Number(p.harga_jual).toLocaleString()}`
+      ).join("\n\n");
+    
+      const pesan =
+        `🔍 *Hasil Pencarian Produk: "${kata}" (${produk.length} ditemukan)*\n\n` +
+        daftar +
+        `\n\n🔎 Cari lagi: /cariproduk nama`;
+    
+      return await sock.sendMessage(sender, { text: pesan });
+    }
   });
 }
 
@@ -403,6 +457,7 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log("🌐 Server running on port", PORT);
 });
+
 
 
 
