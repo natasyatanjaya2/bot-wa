@@ -258,7 +258,7 @@ Contoh penggunaan:
 📌 *Ketik /menu untuk melihat menu kapan saja*  
 🚀 *Ketik /start untuk memulai kembali bot ini*  
   
-✨ *Powered by SoftwarePro*`;
+*Powered by SoftwarePro*`;
 
   await sock.sendMessage(sender, { text: menuText });
 }
@@ -619,6 +619,7 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log("🌐 Server running on port", PORT);
 });
+
 
 
 
