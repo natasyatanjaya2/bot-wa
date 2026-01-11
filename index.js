@@ -390,7 +390,7 @@ async function startBot() {
         });
       }
     
-      const produk = await cariProdukFromWorker(userId, kata);
+      const produk = await getCariProduk(userId, kata);
     
       if (produk.length === 0) {
         return await sock.sendMessage(sender, {
@@ -457,6 +457,7 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log("🌐 Server running on port", PORT);
 });
+
 
 
 
