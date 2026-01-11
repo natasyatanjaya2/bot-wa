@@ -391,8 +391,20 @@ async function startBot() {
       msg.message.extendedTextMessage?.text ||
       "";
 
-    if (text === "/menu" || text === "/start") {
+    const isi = text.toLowerCase().trim();
+
+    // daftar kata sapaan
+    const greetings = ["hi", "hello", "hai", "halo", "permisi"];
+    
+    // cek command menu
+    const isMenuCommand = isi === "/menu" || isi === "/start";
+    
+    // cek greeting (mengandung kata sapaan)
+    const isGreeting = greetings.some(g => isi.includes(g));
+    
+    if (isMenuCommand || isGreeting) {
       await kirimMenuUtama(sock, sender, userId);
+      return;
     }
 
     if (text.startsWith("/infotoko")) {
@@ -598,6 +610,7 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log("🌐 Server running on port", PORT);
 });
+
 
 
 
