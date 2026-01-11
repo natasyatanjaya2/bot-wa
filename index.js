@@ -393,18 +393,19 @@ async function startBot() {
 
     const isi = text.toLowerCase().trim();
 
-    // daftar kata sapaan
-    const greetings = ["hi", "hello", "hai", "halo", "permisi"];
+    const greetingRegex = /\b(hi|hello|hai|halo|permisi)\b/;
     
-    // cek command menu
+    // menu command
     const isMenuCommand = isi === "/menu" || isi === "/start";
     
-    // greeting HARUS kata utuh & pesan pendek
+    // greeting:
+    // - mengandung kata greeting
+    // - bukan command
+    // - pesan pendek (anti loop)
     const isGreeting =
-      greetings.includes(isi) ||        // "hi"
-      greetings.some(g => isi === `${g}!`) ||
-      greetings.some(g => isi === `${g}.`) ||
-      greetings.some(g => isi === `${g},`);
+      greetingRegex.test(isi) &&
+      !isi.startsWith("/") &&
+      isi.length <= 20;
     
     if (isMenuCommand || isGreeting) {
       await kirimMenuUtama(sock, sender, userId);
@@ -614,6 +615,7 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log("🌐 Server running on port", PORT);
 });
+
 
 
 
