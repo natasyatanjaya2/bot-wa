@@ -148,7 +148,7 @@ async function kirimMenuUtama(sock, sender, userId) {
   let menuOrderOnline = "";
   if (orderOnlineEnabled) {
     menuOrderOnline =
-      "🔟 /orderonline – Pesan produk langsung via WhatsApp\n";
+      "7️⃣ /orderonline – Pesan produk langsung via WhatsApp\n";
   }
 
   const menuText = `👋 Hai! Selamat datang di *${namaToko} Bot*.
@@ -160,13 +160,10 @@ Ketik perintah sesuai kebutuhan:
 
 1️⃣ /infotoko – Info tentang toko
 2️⃣ /jamoperasional – Jadwal buka toko
-3️⃣ /daftarproduk – Menampilkan semua produk
-4️⃣ /daftarkategori – Menampilkan semua kategori
-5️⃣ /daftarmerek – Menampilkan semua merek
-6️⃣ /cariproduk [kata] – Cari produk berdasarkan nama
-7️⃣ /carikategori [kata] – Cari kategori tertentu
-8️⃣ /carimerek [kata] – Cari merek tertentu
-9️⃣ /rekomendasiproduk – Produk paling laku
+3️⃣ /cariproduk [kata] – Cari produk berdasarkan nama
+4️⃣ /carikategori [kata] – Cari kategori tertentu
+5️⃣ /carimerek [kata] – Cari merek tertentu
+6️⃣ /rekomendasiproduk – Produk paling laku
 ${menuOrderOnline}
 Contoh penggunaan:
 🔍 /cariproduk filter udara
@@ -406,6 +403,7 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log("🌐 Server running on port", PORT);
 });
+
 
 
 
