@@ -81,6 +81,28 @@ async function getLoadNamaToko(userId) {
   }
 }
 
+async function getInfoToko(userId) {
+  try {
+    const res = await fetch(
+    `https://backend-bot-wa.natasyatanjaya2.workers.dev/info-toko?user_id=${userId}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json"
+          // "x-api-key": process.env.WORKER_API_KEY
+        }
+      }
+    );
+
+    if (!res.ok) return null;
+    return await res.json();
+
+  } catch (err) {
+    console.error("Error fetch info toko:", err);
+    return null;
+  }
+}
+
 async function kirimMenuUtama(sock, sender, userId) {
   // ambil data dari Cloudflare Worker
   const [orderOnlineEnabled, namaToko] = await Promise.all([
@@ -256,6 +278,25 @@ async function startBot() {
     if (text === "/menu" || text === "/start") {
       await kirimMenuUtama(sock, sender, userId);
     }
+
+    if (isiPesan.startsWith("/infotoko")) {
+      const infoToko = await getInfoToko(userId);
+    
+      if (!infoToko) {
+        return await sock.sendMessage(sender, {
+          text: "⚠️ Info toko belum tersedia."
+        });
+      }
+    
+      const pesan =
+        `*${infoToko.nama_toko}*\n` +
+        `Jenis Usaha: ${infoToko.jenis_usaha}\n` +
+        `Deskripsi: ${infoToko.deskripsi}\n` +
+        `Alamat: ${infoToko.alamat}\n` +
+        `Kontak: ${infoToko.no_telepon}`;
+    
+      return await sock.sendMessage(sender, { text: pesan });
+    }
   });
 }
 
@@ -300,6 +341,7 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log("🌐 Server running on port", PORT);
 });
+
 
 
 
