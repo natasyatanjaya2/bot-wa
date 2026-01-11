@@ -81,6 +81,46 @@ async function getLoadNamaToko(userId) {
   }
 }
 
+async function kirimMenuUtama(sock, sender, userId) {
+  // ambil data dari Cloudflare Worker
+  const [orderOnlineEnabled, namaToko] = await Promise.all([
+    getOrderOnlineStatus(userId),
+    getLoadNamaToko(userId)
+  ]);
+
+  let menuOrderOnline = "";
+  if (orderOnlineEnabled) {
+    menuOrderOnline =
+      "🔟 /orderonline – Pesan produk langsung via WhatsApp\n";
+  }
+
+  const menuText = `👋 Hai! Selamat datang di *${namaToko} Bot*.
+Saya siap membantu kebutuhan sparepart Anda. Silakan pilih perintah dari menu di bawah ini:
+
+📋 *Menu Utama ${namaToko}*
+
+Ketik perintah sesuai kebutuhan:
+
+1️⃣ /infotoko – Info tentang toko
+2️⃣ /jamoperasional – Jadwal buka toko
+3️⃣ /daftarproduk – Menampilkan semua produk
+4️⃣ /daftarkategori – Menampilkan semua kategori
+5️⃣ /daftarmerek – Menampilkan semua merek
+6️⃣ /cariproduk [kata] – Cari produk berdasarkan nama
+7️⃣ /carikategori [kata] – Cari kategori tertentu
+8️⃣ /carimerek [kata] – Cari merek tertentu
+9️⃣ /rekomendasiproduk – Produk paling laku
+${menuOrderOnline}
+Contoh penggunaan:
+🔍 /cariproduk filter udara
+🔥 /rekomendasiproduk
+
+📌 *Ketik /menu untuk melihat menu kapan saja*
+🚀 *Ketik /start untuk memulai kembali bot ini*`;
+
+  await sock.sendMessage(sender, { text: menuText });
+}
+
 // =======================
 // QR PAGE
 // =======================
@@ -210,10 +250,8 @@ async function startBot() {
       msg.message.extendedTextMessage?.text ||
       "";
 
-    if (text.toLowerCase() === "ping") {
-      await sock.sendMessage(msg.key.remoteJid, {
-        text: "pong 🟢"
-      });
+    if (text === "/menu" || text === "/start") {
+      await kirimMenuUtama(sock, sender, userId);
     }
   });
 }
@@ -259,4 +297,5 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log("🌐 Server running on port", PORT);
 });
+
 
