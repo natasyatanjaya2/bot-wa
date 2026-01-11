@@ -104,13 +104,17 @@ async function getInfoToko(userId) {
 }
 
 function intToTime(value) {
-  if (!value || value === 0) return "00:00";
+  if (value === null || value === undefined) return "00:00";
 
-  const str = value.toString().padStart(4, "0");
-  const jam = str.slice(0, 2);
-  const menit = str.slice(2, 4);
+  const totalMinutes = Number(value);
+  if (isNaN(totalMinutes) || totalMinutes < 0) return "00:00";
 
-  return `${jam}:${menit}`;
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+
+  return `${hours.toString().padStart(2, "0")}:${minutes
+    .toString()
+    .padStart(2, "0")}`;
 }
 
 async function getSettingsJamOperasional(userId) {
@@ -402,6 +406,7 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log("🌐 Server running on port", PORT);
 });
+
 
 
 
