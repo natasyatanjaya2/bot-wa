@@ -236,7 +236,7 @@ async function kirimMenuUtama(sock, sender, userId) {
   }
 
   const menuText = `👋 Hai! Selamat datang di *${namaToko} Bot*  
-🤖 Bot ini dibuat menggunakan *SoftwarePro*  
+Bot ini dibuat menggunakan *SoftwarePro*  
   
 Saya siap membantu kebutuhan sparepart Anda. Silakan pilih perintah dari menu di bawah ini:
   
@@ -619,6 +619,7 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log("🌐 Server running on port", PORT);
 });
+
 
 
 
