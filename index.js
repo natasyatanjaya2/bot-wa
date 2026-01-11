@@ -381,8 +381,8 @@ async function startBot() {
       return await sock.sendMessage(sender, { text: pesan });
     }
 
-    if (isiPesan.startsWith("/cariproduk")) {
-      const kata = isiPesan.replace("/cariproduk", "").trim().toLowerCase();
+    if (text.startsWith("/cariproduk")) {
+      const kata = text.replace("/cariproduk", "").trim().toLowerCase();
     
       if (!kata) {
         return await sock.sendMessage(sender, {
@@ -457,6 +457,7 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log("🌐 Server running on port", PORT);
 });
+
 
 
 
