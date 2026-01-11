@@ -408,8 +408,7 @@ async function startBot() {
     
       const pesan =
         `🔍 *Hasil Pencarian Produk: "${kata}" (${produk.length} ditemukan)*\n\n` +
-        daftar +
-        `\n\n🔎 Cari lagi: /cariproduk nama`;
+        daftar;
     
       return await sock.sendMessage(sender, { text: pesan });
     }
@@ -457,6 +456,7 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log("🌐 Server running on port", PORT);
 });
+
 
 
 
