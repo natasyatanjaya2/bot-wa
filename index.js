@@ -25,6 +25,11 @@ let qrTimer = null;
 let isRestarting = false;
 let userId = 1;
 
+const mongoose = require("mongoose");
+mongoose.connect(process.env.MONGO_URL)
+  .then(() => console.log("✅ MongoDB connected"))
+  .catch(err => console.log("❌ MongoDB error:", err));
+
 async function getOrderOnlineStatus(userId) {
   try {
     const res = await fetch(
