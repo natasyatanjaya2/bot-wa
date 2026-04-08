@@ -1,16 +1,17 @@
 /* eslint-env node */
 /* global process */
 
-import {
-  default as makeWASocket,
+import makeWASocket, {
   useMultiFileAuthState,
-  DisconnectReason
+  DisconnectReason,
+  BufferJSON
 } from "@whiskeysockets/baileys";
 
 import express from "express";
 import pino from "pino";
 import QRCode from "qrcode";
 import fs from "fs";
+import mongoose from "mongoose";
 let forceNewQR = false;
 
 const app = express();
@@ -25,12 +26,9 @@ let qrTimer = null;
 let isRestarting = false;
 let userId = 1;
 
-const mongoose = require("mongoose");
 mongoose.connect(process.env.MONGO_URL)
   .then(() => console.log("✅ MongoDB connected"))
   .catch(err => console.log("❌ MongoDB error:", err));
-
-const { BufferJSON } = require("@whiskeysockets/baileys");
 
 const AuthSchema = new mongoose.Schema({
   key: String,
