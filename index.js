@@ -687,23 +687,32 @@ app.get("/test", (req, res) => {
 
 app.get("/reset", async (req, res) => {
   try {
-    console.log("🧹 Resetting session...");
+    console.log("🧹 FORCE RESET TOTAL");
 
-    await Auth.deleteMany({}); // kosongkan DB
+    // 1. Hapus session DB
+    await Auth.deleteMany({});
 
+    // 2. Kill socket
     if (sockInstance) {
-      await sockInstance.logout();
+      try {
+        await sockInstance.logout();
+        sockInstance.end();
+      } catch (e) {}
     }
 
+    // 3. Reset semua state
     latestQR = null;
+    sockInstance = null;
 
-    res.send("✅ Session reset, silakan buka /qr");
-    
+    res.send("✅ Reset total, bot restart...");
+
+    // 4. Restart bot dari nol
     setTimeout(() => {
       startBot();
-    }, 2000);
+    }, 3000);
 
   } catch (e) {
-    res.send("❌ Error reset");
+    console.error(e);
+    res.send("❌ Reset gagal");
   }
 });
