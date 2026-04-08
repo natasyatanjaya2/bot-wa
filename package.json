@@ -2,7 +2,7 @@
   "name": "bot-wa-stok",
   "version": "1.0.0",
   "main": "index.js",
-  "type": "module",
+  "_type": "module",
   "bin": {
     "bot-wa-stok": "index.js"
   },
