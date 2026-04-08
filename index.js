@@ -150,7 +150,7 @@ async function getLoadNamaToko(userId) {
 async function getInfoToko(userId) {
   try {
     const res = await fetch(
-    `https://backend-bot-wa.natasyatanjaya2.workers.dev/info-toko?user_id=${userId}`,
+      `https://backend-bot-wa.natasyatanjaya2.workers.dev/info-toko?user_id=${userId}`,
       {
         method: "GET",
         headers: {
@@ -408,13 +408,13 @@ app.get("/qr", async (req, res) => {
 //     if (connection === "close") {
 //       const statusCode = lastDisconnect?.error?.output?.statusCode;
 //       console.log("❌ Connection closed:", statusCode);
-    
+
 //       // =======================
 //       // LOGOUT → DELETE AUTH
 //       // =======================
 //       if (statusCode === DisconnectReason.loggedOut && forceNewQR) {
 //         console.log("🧹 Deleting auth folder...");
-    
+
 //         try {
 //           // if (fs.existsSync("./auth")) {
 //           //   fs.rmSync("./auth", { recursive: true, force: true });
@@ -423,21 +423,21 @@ app.get("/qr", async (req, res) => {
 //         } catch (e) {
 //           console.error("Auth delete error:", e);
 //         }
-    
+
 //         // reset state
 //         latestQR = null;
 //         forceNewQR = false;
 //         sockInstance = null;
-    
+
 //         // ⏳ tunggu filesystem settle
 //         setTimeout(() => {
 //           console.log("🔁 Restarting bot for new QR...");
 //           startBot();
 //         }, 3000);
-    
+
 //         return;
 //       }
-    
+
 //       // =======================
 //       // NORMAL RECONNECT
 //       // =======================
@@ -466,10 +466,10 @@ app.get("/qr", async (req, res) => {
 //     const isi = text.toLowerCase().trim();
 
 //     const greetingRegex = /\b(hi|hello|hai|halo|permisi)\b/;
-    
+
 //     // menu command
 //     const isMenuCommand = isi === "/menu" || isi === "/start";
-    
+
 //     // greeting:
 //     // - mengandung kata greeting
 //     // - bukan command
@@ -478,7 +478,7 @@ app.get("/qr", async (req, res) => {
 //       greetingRegex.test(isi) &&
 //       !isi.startsWith("/") &&
 //       isi.length <= 20;
-    
+
 //     if (isMenuCommand || isGreeting) {
 //       await kirimMenuUtama(sock, sender, userId);
 //       return;
@@ -486,32 +486,32 @@ app.get("/qr", async (req, res) => {
 
 //     if (text.startsWith("/infotoko")) {
 //       const infoToko = await getInfoToko(userId);
-    
+
 //       if (!infoToko) {
 //         return await sock.sendMessage(sender, {
 //           text: "⚠️ Info toko belum tersedia."
 //         });
 //       }
-    
+
 //       const pesan =
 //         `*${infoToko.nama_toko}*\n` +
 //         `Jenis Usaha: ${infoToko.jenis_usaha}\n` +
 //         `Deskripsi: ${infoToko.deskripsi}\n` +
 //         `Alamat: ${infoToko.alamat}\n` +
 //         `Kontak: ${infoToko.no_telepon}`;
-    
+
 //       return await sock.sendMessage(sender, { text: pesan });
 //     }
 
 //     if (text.startsWith("/jamoperasional")) {
 //       const jamOperasional = await getSettingsJamOperasional(userId);
-    
+
 //       if (jamOperasional.length === 0) {
 //         return await sock.sendMessage(sender, {
 //           text: "⚠️ Jadwal operasional belum diatur."
 //         });
 //       }
-    
+
 //       const daftar = jamOperasional.map(row => {
 //         if (row.aktif) {
 //           const buka = intToTime(row.jam_buka);
@@ -521,35 +521,35 @@ app.get("/qr", async (req, res) => {
 //           return `📅 *${row.hari}*: ❌ *Tutup*`;
 //         }
 //       }).join("\n");
-    
+
 //       const namaToko = await getLoadNamaToko(userId);
-    
+
 //       const pesan =
 //         `🕐 *Jam Operasional ${namaToko}*\n` +
 //         `Berikut adalah jadwal buka toko:\n\n` +
 //         `${daftar}\n\n` +
 //         `📌 Jadwal dapat berubah sewaktu-waktu.`;
-    
+
 //       return await sock.sendMessage(sender, { text: pesan });
 //     }
 
 //     if (text.startsWith("/cariproduk")) {
 //       const kata = text.replace("/cariproduk", "").trim().toLowerCase();
-    
+
 //       if (!kata) {
 //         return await sock.sendMessage(sender, {
 //           text: "🔍 Contoh: /cariproduk oli"
 //         });
 //       }
-    
+
 //       const produk = await getCariProduk(userId, kata);
-    
+
 //       if (produk.length === 0) {
 //         return await sock.sendMessage(sender, {
 //           text: `🔍 Produk dengan kata "${kata}" tidak ditemukan.`
 //         });
 //       }
-    
+
 //       const daftar = produk.map((p, i) =>
 //         `${i + 1}. *${p.nama}*\n` +
 //         `Kategori: ${p.kategori}\n` +
@@ -557,90 +557,90 @@ app.get("/qr", async (req, res) => {
 //         `Stok: ${p.stok}\n` +
 //         `Harga: ${Number(p.harga_jual).toLocaleString()}`
 //       ).join("\n\n");
-    
+
 //       const pesan =
 //         `🔍 *Hasil Pencarian Produk: "${kata}" (${produk.length} ditemukan)*\n\n` +
 //         daftar;
-    
+
 //       return await sock.sendMessage(sender, { text: pesan });
 //     }
 
 //     if (text.startsWith("/carikategori")) {
 //       const kata = text.replace("/carikategori", "").trim().toLowerCase();
-    
+
 //       if (!kata) {
 //         return await sock.sendMessage(sender, {
 //           text: "📂 Contoh: /carikategori oli"
 //         });
 //       }
-    
+
 //       const kategori = await getCariKategori(userId, kata);
-    
+
 //       if (kategori.length === 0) {
 //         return await sock.sendMessage(sender, {
 //           text: `🔍 Kategori dengan kata "${kata}" tidak ditemukan.`
 //         });
 //       }
-    
+
 //       const daftar = kategori
 //         .map((k, i) => `${i + 1}. ${k.nama}`)
 //         .join("\n");
-    
+
 //       const pesan =
 //         `📂 *Hasil Pencarian Kategori: "${kata}" (${kategori.length} ditemukan)*\n\n` +
 //         daftar;
-    
+
 //       return await sock.sendMessage(sender, { text: pesan });
 //     }
 
 //     if (text.startsWith("/carimerek")) {
 //       const kata = text.replace("/carimerek", "").trim().toLowerCase();
-    
+
 //       if (!kata) {
 //         return await sock.sendMessage(sender, {
 //           text: "🏷️ Contoh: /carimerek honda"
 //         });
 //       }
-    
+
 //       const merek = await getCariMerek(userId, kata);
-    
+
 //       if (merek.length === 0) {
 //         return await sock.sendMessage(sender, {
 //           text: `🔍 Merek dengan kata "${kata}" tidak ditemukan.`
 //         });
 //       }
-    
+
 //       const daftar = merek
 //         .map((m, i) => `${i + 1}. ${m.nama}`)
 //         .join("\n");
-    
+
 //       const pesan =
 //         `🏷️ *Hasil Pencarian Merek: "${kata}" (${merek.length} ditemukan)*\n\n` +
 //         daftar;
-    
+
 //       return await sock.sendMessage(sender, { text: pesan });
 //     }
 
 //     if (text.startsWith("/rekomendasiproduk")) {
 //       const produk = await getRekomendasiProduk(userId);
-    
+
 //       if (produk.length === 0) {
 //         return await sock.sendMessage(sender, {
 //           text: "❌ Belum ada data pembelian bulan ini."
 //         });
 //       }
-    
+
 //       let pesan = produk.length < 3
 //         ? `📊 *Hanya ${produk.length} produk terjual bulan ini*\n\n`
 //         : `🔥 *10 Produk Terlaris Bulan Ini*\n\n`;
-    
+
 //       pesan += produk.map((p, i) =>
 //         `${i + 1}. *${p.nama}*\n` +
 //         `Terjual: ${p.total_terjual}x\n` +
 //         `Stok: ${p.stok} | ${p.kategori} • ${p.merek}\n` +
 //         `Harga: ${Number(p.harga_jual).toLocaleString()}\n`
 //       ).join("\n\n");
-    
+
 //       return await sock.sendMessage(sender, { text: pesan });
 //     }
 //   });
@@ -652,16 +652,16 @@ async function startBot() {
 
   if (FORCE_NEW) {
     console.log("🧨 FORCE NEW SESSION (NO AUTH)");
-    
+
     state = {
       creds: {},
       keys: {
         get: () => ({}),
-        set: async () => {}
+        set: async () => { }
       }
     };
 
-    saveCreds = async () => {};
+    saveCreds = async () => { };
   } else {
     const mongo = await useMongoAuthState();
     state = mongo.state;
@@ -670,7 +670,8 @@ async function startBot() {
 
   const sock = makeWASocket({
     auth: state,
-    logger: pino({ level: "silent" })
+    logger: pino({ level: "silent" }),
+    browser: ["Render Bot", "Chrome", "1.0.0"]
   });
 
   sockInstance = sock;
@@ -678,6 +679,7 @@ async function startBot() {
   sock.ev.on("creds.update", saveCreds);
 
   sock.ev.on("connection.update", (update) => {
+    console.log("DEBUG UPDATE:", update);
     const { connection, qr } = update;
 
     if (qr) {
@@ -745,7 +747,7 @@ app.get("/reset", async (req, res) => {
       try {
         await sockInstance.logout();
         sockInstance.end();
-      } catch (e) {}
+      } catch (e) { }
     }
 
     // 3. Reset semua state
