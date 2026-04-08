@@ -355,7 +355,8 @@ async function startBot() {
   console.log("🚀 Starting WhatsApp bot...");
 
   // const { state, saveCreds } = await useMultiFileAuthState("./auth");
-  const { state, saveCreds } = await useMongoAuthState();
+  // const { state, saveCreds } = await useMongoAuthState();
+  const { state, saveCreds } = await useMultiFileAuthState("temp-auth");
 
   const sock = makeWASocket({
     auth: state,
