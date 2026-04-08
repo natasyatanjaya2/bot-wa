@@ -683,6 +683,11 @@ async function startBot() {
     console.log("DEBUG UPDATE:", update);
     const { connection, qr } = update;
 
+    if (update.qr) {
+      console.log("🔥 QR TERDETEKSI");
+      latestQR = update.qr;
+    }
+
     if (qr) {
       console.log("📱 QR READY!");
       latestQR = qr;
