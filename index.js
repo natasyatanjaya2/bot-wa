@@ -30,6 +30,65 @@ mongoose.connect(process.env.MONGO_URL)
   .then(() => console.log("✅ MongoDB connected"))
   .catch(err => console.log("❌ MongoDB error:", err));
 
+const { BufferJSON } = require("@whiskeysockets/baileys");
+
+const AuthSchema = new mongoose.Schema({
+  key: String,
+  value: mongoose.Schema.Types.Mixed
+});
+
+const Auth = mongoose.model("Auth", AuthSchema);
+
+const useMongoAuthState = async () => {
+  const writeData = async (data) => {
+    for (const key in data) {
+      await Auth.findOneAndUpdate(
+        { key },
+        { value: JSON.parse(JSON.stringify(data[key], BufferJSON.replacer)) },
+        { upsert: true }
+      );
+    }
+  };
+  const readData = async () => {
+    const docs = await Auth.find();
+    const state = {};
+    docs.forEach(doc => {
+      state[doc.key] = JSON.parse(
+        JSON.stringify(doc.value),
+        BufferJSON.reviver
+      );
+    });
+    return state;
+  };
+  const state = await readData();
+  return {
+    state: {
+      creds: state.creds || {},
+      keys: {
+        get: (type, ids) => {
+          const data = {};
+          ids.forEach(id => {
+            data[id] = state[`${type}-${id}`];
+          });
+          return data;
+        },
+        set: async (data) => {
+          const newData = {};
+          for (const type in data) {
+            for (const id in data[type]) {
+              newData[`${type}-${id}`] = data[type][id];
+            }
+          }
+          await writeData(newData);
+        }
+      }
+    },
+    saveCreds: async () => {
+      await writeData({ creds: state.creds });
+    }
+  };
+};
+
 async function getOrderOnlineStatus(userId) {
   try {
     const res = await fetch(
@@ -294,7 +353,8 @@ app.get("/qr", async (req, res) => {
 async function startBot() {
   console.log("🚀 Starting WhatsApp bot...");
 
-  const { state, saveCreds } = await useMultiFileAuthState("./auth");
+  // const { state, saveCreds } = await useMultiFileAuthState("./auth");
+  const { state, saveCreds } = await useMongoAuthState();
 
   const sock = makeWASocket({
     auth: state,
@@ -353,10 +413,10 @@ async function startBot() {
         console.log("🧹 Deleting auth folder...");
     
         try {
-          if (fs.existsSync("./auth")) {
-            fs.rmSync("./auth", { recursive: true, force: true });
-            console.log("✅ Auth folder deleted");
-          }
+          // if (fs.existsSync("./auth")) {
+          //   fs.rmSync("./auth", { recursive: true, force: true });
+          //   console.log("✅ Auth folder deleted");
+          // }
         } catch (e) {
           console.error("Auth delete error:", e);
         }
