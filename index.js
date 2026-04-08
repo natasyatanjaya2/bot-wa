@@ -620,25 +620,6 @@ app.listen(PORT, () => {
   console.log("🌐 Server running on port", PORT);
 });
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+app.get("/test", (req, res) => {
+  res.send("TEST OK");
+});
