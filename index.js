@@ -27,7 +27,10 @@ let isRestarting = false;
 let userId = 1;
 
 mongoose.connect(process.env.MONGO_URL)
-  .then(() => console.log("✅ MongoDB connected"))
+  .then(() => {
+    console.log("✅ MongoDB connected");
+    startBot(); // ⬅️ pindahkan ke sini
+  })
   .catch(err => console.log("❌ MongoDB error:", err));
 
 const AuthSchema = new mongoose.Schema({
@@ -662,11 +665,6 @@ app.get("/logout", async (req, res) => {
     res.status(500).send(err.message);
   }
 });
-
-// =======================
-// START BOT
-// =======================
-startBot();
 
 // =======================
 // API ROOT
