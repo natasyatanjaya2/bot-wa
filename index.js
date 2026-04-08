@@ -25,7 +25,6 @@ let sockInstance = null;
 let qrTimer = null;
 let isRestarting = false;
 let userId = 1;
-let FORCE_NEW = true;
 
 mongoose.connect(process.env.MONGO_URL)
   .then(() => {
@@ -648,31 +647,12 @@ app.get("/qr", async (req, res) => {
 async function startBot() {
   console.log("🚀 Starting WhatsApp bot...");
 
-  let state, saveCreds;
-
-  if (FORCE_NEW) {
-    console.log("🧨 FORCE NEW SESSION (NO AUTH)");
-
-    state = {
-      creds: {},
-      keys: {
-        get: () => ({}),
-        set: async () => { }
-      }
-    };
-
-    saveCreds = async () => { };
-  } else {
-    const mongo = await useMongoAuthState();
-    state = mongo.state;
-    saveCreds = mongo.saveCreds;
-  }
+  const { state, saveCreds } = await useMultiFileAuthState("temp-auth");
 
   const sock = makeWASocket({
     auth: state,
     logger: pino({ level: "silent" }),
-    browser: ["Render Bot", "Chrome", "1.0.0"],
-    printQRInTerminal: true
+    browser: ["Ubuntu", "Chrome", "20.0.04"]
   });
 
   sockInstance = sock;
@@ -680,22 +660,22 @@ async function startBot() {
   sock.ev.on("creds.update", saveCreds);
 
   sock.ev.on("connection.update", (update) => {
-    console.log("DEBUG UPDATE:", update);
+    console.log("UPDATE:", update);
+
     const { connection, qr } = update;
 
-    if (update.qr) {
-      console.log("🔥 QR TERDETEKSI");
-      latestQR = update.qr;
-    }
-
     if (qr) {
-      console.log("📱 QR READY!");
+      console.log("🔥 QR MUNCUL");
       latestQR = qr;
     }
 
     if (connection === "open") {
       console.log("✅ CONNECTED");
-      FORCE_NEW = false; // setelah login, pakai MongoDB lagi
+    }
+
+    if (connection === "close") {
+      console.log("❌ DISCONNECTED");
+      setTimeout(startBot, 3000);
     }
   });
 }
