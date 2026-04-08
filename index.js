@@ -684,3 +684,26 @@ app.listen(PORT, () => {
 app.get("/test", (req, res) => {
   res.send("TEST OK");
 });
+
+app.get("/reset", async (req, res) => {
+  try {
+    console.log("🧹 Resetting session...");
+
+    await Auth.deleteMany({}); // kosongkan DB
+
+    if (sockInstance) {
+      await sockInstance.logout();
+    }
+
+    latestQR = null;
+
+    res.send("✅ Session reset, silakan buka /qr");
+    
+    setTimeout(() => {
+      startBot();
+    }, 2000);
+
+  } catch (e) {
+    res.send("❌ Error reset");
+  }
+});
