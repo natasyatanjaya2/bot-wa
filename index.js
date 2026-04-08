@@ -25,6 +25,7 @@ let sockInstance = null;
 let qrTimer = null;
 let isRestarting = false;
 let userId = 1;
+let FORCE_NEW = true;
 
 mongoose.connect(process.env.MONGO_URL)
   .then(() => {
@@ -351,12 +352,321 @@ app.get("/qr", async (req, res) => {
 // =======================
 // START WHATSAPP BOT
 // =======================
+// async function startBot() {
+//   console.log("🚀 Starting WhatsApp bot...");
+
+//   // const { state, saveCreds } = await useMultiFileAuthState("./auth");
+//   // const { state, saveCreds } = await useMongoAuthState();
+//   const { state, saveCreds } = await useMultiFileAuthState("temp-auth");
+
+//   const sock = makeWASocket({
+//     auth: state,
+//     logger: pino({ level: "silent" })
+//   });
+
+//   sockInstance = sock;
+
+//   sock.ev.on("creds.update", saveCreds);
+
+//   sock.ev.on("connection.update", (update) => {
+//     const { connection, lastDisconnect, qr } = update;
+
+//     // =======================
+//     // QR HANDLING + AUTO RENEW
+//     // =======================
+//     if (qr) {
+//       latestQR = qr;
+
+//       if (qrTimer) clearTimeout(qrTimer);
+
+//       qrTimer = setTimeout(() => {
+//         console.log("⏰ QR expired, regenerating...");
+//         try {
+//           sock.end(); // paksa reconnect → QR baru
+//         } catch (e) {}
+//       }, 40000); // 40 detik aman
+
+//       const host =
+//         process.env.PUBLIC_URL ||
+//         `http://localhost:${process.env.PORT || 3000}`;
+
+//       console.log("📱 Scan QR at:", `${host}/qr`);
+//     }
+
+//     // =======================
+//     // CONNECTED
+//     // =======================
+//     if (connection === "open") {
+//       console.log("✅ BOT WHATSAPP CONNECTED");
+//       latestQR = null;
+//       if (qrTimer) clearTimeout(qrTimer);
+//     }
+
+//     // =======================
+//     // DISCONNECTED
+//     // =======================
+//     if (connection === "close") {
+//       const statusCode = lastDisconnect?.error?.output?.statusCode;
+//       console.log("❌ Connection closed:", statusCode);
+    
+//       // =======================
+//       // LOGOUT → DELETE AUTH
+//       // =======================
+//       if (statusCode === DisconnectReason.loggedOut && forceNewQR) {
+//         console.log("🧹 Deleting auth folder...");
+    
+//         try {
+//           // if (fs.existsSync("./auth")) {
+//           //   fs.rmSync("./auth", { recursive: true, force: true });
+//           //   console.log("✅ Auth folder deleted");
+//           // }
+//         } catch (e) {
+//           console.error("Auth delete error:", e);
+//         }
+    
+//         // reset state
+//         latestQR = null;
+//         forceNewQR = false;
+//         sockInstance = null;
+    
+//         // ⏳ tunggu filesystem settle
+//         setTimeout(() => {
+//           console.log("🔁 Restarting bot for new QR...");
+//           startBot();
+//         }, 3000);
+    
+//         return;
+//       }
+    
+//       // =======================
+//       // NORMAL RECONNECT
+//       // =======================
+//       setTimeout(() => {
+//         console.log("🔄 Reconnecting bot...");
+//         startBot();
+//       }, 5000);
+//     }
+//   });
+
+//   // =======================
+//   // MESSAGE HANDLER
+//   // =======================
+//   sock.ev.on("messages.upsert", async ({ messages }) => {
+//     const msg = messages[0];
+//     if (!msg?.message) return;
+
+//     // ✅ DEFINISIKAN sender
+//     const sender = msg.key.remoteJid;
+
+//     const text =
+//       msg.message.conversation ||
+//       msg.message.extendedTextMessage?.text ||
+//       "";
+
+//     const isi = text.toLowerCase().trim();
+
+//     const greetingRegex = /\b(hi|hello|hai|halo|permisi)\b/;
+    
+//     // menu command
+//     const isMenuCommand = isi === "/menu" || isi === "/start";
+    
+//     // greeting:
+//     // - mengandung kata greeting
+//     // - bukan command
+//     // - pesan pendek (anti loop)
+//     const isGreeting =
+//       greetingRegex.test(isi) &&
+//       !isi.startsWith("/") &&
+//       isi.length <= 20;
+    
+//     if (isMenuCommand || isGreeting) {
+//       await kirimMenuUtama(sock, sender, userId);
+//       return;
+//     }
+
+//     if (text.startsWith("/infotoko")) {
+//       const infoToko = await getInfoToko(userId);
+    
+//       if (!infoToko) {
+//         return await sock.sendMessage(sender, {
+//           text: "⚠️ Info toko belum tersedia."
+//         });
+//       }
+    
+//       const pesan =
+//         `*${infoToko.nama_toko}*\n` +
+//         `Jenis Usaha: ${infoToko.jenis_usaha}\n` +
+//         `Deskripsi: ${infoToko.deskripsi}\n` +
+//         `Alamat: ${infoToko.alamat}\n` +
+//         `Kontak: ${infoToko.no_telepon}`;
+    
+//       return await sock.sendMessage(sender, { text: pesan });
+//     }
+
+//     if (text.startsWith("/jamoperasional")) {
+//       const jamOperasional = await getSettingsJamOperasional(userId);
+    
+//       if (jamOperasional.length === 0) {
+//         return await sock.sendMessage(sender, {
+//           text: "⚠️ Jadwal operasional belum diatur."
+//         });
+//       }
+    
+//       const daftar = jamOperasional.map(row => {
+//         if (row.aktif) {
+//           const buka = intToTime(row.jam_buka);
+//           const tutup = intToTime(row.jam_tutup);
+//           return `📅 *${row.hari}*: ${buka} - ${tutup}`;
+//         } else {
+//           return `📅 *${row.hari}*: ❌ *Tutup*`;
+//         }
+//       }).join("\n");
+    
+//       const namaToko = await getLoadNamaToko(userId);
+    
+//       const pesan =
+//         `🕐 *Jam Operasional ${namaToko}*\n` +
+//         `Berikut adalah jadwal buka toko:\n\n` +
+//         `${daftar}\n\n` +
+//         `📌 Jadwal dapat berubah sewaktu-waktu.`;
+    
+//       return await sock.sendMessage(sender, { text: pesan });
+//     }
+
+//     if (text.startsWith("/cariproduk")) {
+//       const kata = text.replace("/cariproduk", "").trim().toLowerCase();
+    
+//       if (!kata) {
+//         return await sock.sendMessage(sender, {
+//           text: "🔍 Contoh: /cariproduk oli"
+//         });
+//       }
+    
+//       const produk = await getCariProduk(userId, kata);
+    
+//       if (produk.length === 0) {
+//         return await sock.sendMessage(sender, {
+//           text: `🔍 Produk dengan kata "${kata}" tidak ditemukan.`
+//         });
+//       }
+    
+//       const daftar = produk.map((p, i) =>
+//         `${i + 1}. *${p.nama}*\n` +
+//         `Kategori: ${p.kategori}\n` +
+//         `Merek: ${p.merek}\n` +
+//         `Stok: ${p.stok}\n` +
+//         `Harga: ${Number(p.harga_jual).toLocaleString()}`
+//       ).join("\n\n");
+    
+//       const pesan =
+//         `🔍 *Hasil Pencarian Produk: "${kata}" (${produk.length} ditemukan)*\n\n` +
+//         daftar;
+    
+//       return await sock.sendMessage(sender, { text: pesan });
+//     }
+
+//     if (text.startsWith("/carikategori")) {
+//       const kata = text.replace("/carikategori", "").trim().toLowerCase();
+    
+//       if (!kata) {
+//         return await sock.sendMessage(sender, {
+//           text: "📂 Contoh: /carikategori oli"
+//         });
+//       }
+    
+//       const kategori = await getCariKategori(userId, kata);
+    
+//       if (kategori.length === 0) {
+//         return await sock.sendMessage(sender, {
+//           text: `🔍 Kategori dengan kata "${kata}" tidak ditemukan.`
+//         });
+//       }
+    
+//       const daftar = kategori
+//         .map((k, i) => `${i + 1}. ${k.nama}`)
+//         .join("\n");
+    
+//       const pesan =
+//         `📂 *Hasil Pencarian Kategori: "${kata}" (${kategori.length} ditemukan)*\n\n` +
+//         daftar;
+    
+//       return await sock.sendMessage(sender, { text: pesan });
+//     }
+
+//     if (text.startsWith("/carimerek")) {
+//       const kata = text.replace("/carimerek", "").trim().toLowerCase();
+    
+//       if (!kata) {
+//         return await sock.sendMessage(sender, {
+//           text: "🏷️ Contoh: /carimerek honda"
+//         });
+//       }
+    
+//       const merek = await getCariMerek(userId, kata);
+    
+//       if (merek.length === 0) {
+//         return await sock.sendMessage(sender, {
+//           text: `🔍 Merek dengan kata "${kata}" tidak ditemukan.`
+//         });
+//       }
+    
+//       const daftar = merek
+//         .map((m, i) => `${i + 1}. ${m.nama}`)
+//         .join("\n");
+    
+//       const pesan =
+//         `🏷️ *Hasil Pencarian Merek: "${kata}" (${merek.length} ditemukan)*\n\n` +
+//         daftar;
+    
+//       return await sock.sendMessage(sender, { text: pesan });
+//     }
+
+//     if (text.startsWith("/rekomendasiproduk")) {
+//       const produk = await getRekomendasiProduk(userId);
+    
+//       if (produk.length === 0) {
+//         return await sock.sendMessage(sender, {
+//           text: "❌ Belum ada data pembelian bulan ini."
+//         });
+//       }
+    
+//       let pesan = produk.length < 3
+//         ? `📊 *Hanya ${produk.length} produk terjual bulan ini*\n\n`
+//         : `🔥 *10 Produk Terlaris Bulan Ini*\n\n`;
+    
+//       pesan += produk.map((p, i) =>
+//         `${i + 1}. *${p.nama}*\n` +
+//         `Terjual: ${p.total_terjual}x\n` +
+//         `Stok: ${p.stok} | ${p.kategori} • ${p.merek}\n` +
+//         `Harga: ${Number(p.harga_jual).toLocaleString()}\n`
+//       ).join("\n\n");
+    
+//       return await sock.sendMessage(sender, { text: pesan });
+//     }
+//   });
+// }
 async function startBot() {
   console.log("🚀 Starting WhatsApp bot...");
 
-  // const { state, saveCreds } = await useMultiFileAuthState("./auth");
-  // const { state, saveCreds } = await useMongoAuthState();
-  const { state, saveCreds } = await useMultiFileAuthState("temp-auth");
+  let state, saveCreds;
+
+  if (FORCE_NEW) {
+    console.log("🧨 FORCE NEW SESSION (NO AUTH)");
+    
+    state = {
+      creds: {},
+      keys: {
+        get: () => ({}),
+        set: async () => {}
+      }
+    };
+
+    saveCreds = async () => {};
+  } else {
+    const mongo = await useMongoAuthState();
+    state = mongo.state;
+    saveCreds = mongo.saveCreds;
+  }
 
   const sock = makeWASocket({
     auth: state,
@@ -368,279 +678,16 @@ async function startBot() {
   sock.ev.on("creds.update", saveCreds);
 
   sock.ev.on("connection.update", (update) => {
-    const { connection, lastDisconnect, qr } = update;
+    const { connection, qr } = update;
 
-    // =======================
-    // QR HANDLING + AUTO RENEW
-    // =======================
     if (qr) {
+      console.log("📱 QR READY!");
       latestQR = qr;
-
-      if (qrTimer) clearTimeout(qrTimer);
-
-      qrTimer = setTimeout(() => {
-        console.log("⏰ QR expired, regenerating...");
-        try {
-          sock.end(); // paksa reconnect → QR baru
-        } catch (e) {}
-      }, 40000); // 40 detik aman
-
-      const host =
-        process.env.PUBLIC_URL ||
-        `http://localhost:${process.env.PORT || 3000}`;
-
-      console.log("📱 Scan QR at:", `${host}/qr`);
     }
 
-    // =======================
-    // CONNECTED
-    // =======================
     if (connection === "open") {
-      console.log("✅ BOT WHATSAPP CONNECTED");
-      latestQR = null;
-      if (qrTimer) clearTimeout(qrTimer);
-    }
-
-    // =======================
-    // DISCONNECTED
-    // =======================
-    if (connection === "close") {
-      const statusCode = lastDisconnect?.error?.output?.statusCode;
-      console.log("❌ Connection closed:", statusCode);
-    
-      // =======================
-      // LOGOUT → DELETE AUTH
-      // =======================
-      if (statusCode === DisconnectReason.loggedOut && forceNewQR) {
-        console.log("🧹 Deleting auth folder...");
-    
-        try {
-          // if (fs.existsSync("./auth")) {
-          //   fs.rmSync("./auth", { recursive: true, force: true });
-          //   console.log("✅ Auth folder deleted");
-          // }
-        } catch (e) {
-          console.error("Auth delete error:", e);
-        }
-    
-        // reset state
-        latestQR = null;
-        forceNewQR = false;
-        sockInstance = null;
-    
-        // ⏳ tunggu filesystem settle
-        setTimeout(() => {
-          console.log("🔁 Restarting bot for new QR...");
-          startBot();
-        }, 3000);
-    
-        return;
-      }
-    
-      // =======================
-      // NORMAL RECONNECT
-      // =======================
-      setTimeout(() => {
-        console.log("🔄 Reconnecting bot...");
-        startBot();
-      }, 5000);
-    }
-  });
-
-  // =======================
-  // MESSAGE HANDLER
-  // =======================
-  sock.ev.on("messages.upsert", async ({ messages }) => {
-    const msg = messages[0];
-    if (!msg?.message) return;
-
-    // ✅ DEFINISIKAN sender
-    const sender = msg.key.remoteJid;
-
-    const text =
-      msg.message.conversation ||
-      msg.message.extendedTextMessage?.text ||
-      "";
-
-    const isi = text.toLowerCase().trim();
-
-    const greetingRegex = /\b(hi|hello|hai|halo|permisi)\b/;
-    
-    // menu command
-    const isMenuCommand = isi === "/menu" || isi === "/start";
-    
-    // greeting:
-    // - mengandung kata greeting
-    // - bukan command
-    // - pesan pendek (anti loop)
-    const isGreeting =
-      greetingRegex.test(isi) &&
-      !isi.startsWith("/") &&
-      isi.length <= 20;
-    
-    if (isMenuCommand || isGreeting) {
-      await kirimMenuUtama(sock, sender, userId);
-      return;
-    }
-
-    if (text.startsWith("/infotoko")) {
-      const infoToko = await getInfoToko(userId);
-    
-      if (!infoToko) {
-        return await sock.sendMessage(sender, {
-          text: "⚠️ Info toko belum tersedia."
-        });
-      }
-    
-      const pesan =
-        `*${infoToko.nama_toko}*\n` +
-        `Jenis Usaha: ${infoToko.jenis_usaha}\n` +
-        `Deskripsi: ${infoToko.deskripsi}\n` +
-        `Alamat: ${infoToko.alamat}\n` +
-        `Kontak: ${infoToko.no_telepon}`;
-    
-      return await sock.sendMessage(sender, { text: pesan });
-    }
-
-    if (text.startsWith("/jamoperasional")) {
-      const jamOperasional = await getSettingsJamOperasional(userId);
-    
-      if (jamOperasional.length === 0) {
-        return await sock.sendMessage(sender, {
-          text: "⚠️ Jadwal operasional belum diatur."
-        });
-      }
-    
-      const daftar = jamOperasional.map(row => {
-        if (row.aktif) {
-          const buka = intToTime(row.jam_buka);
-          const tutup = intToTime(row.jam_tutup);
-          return `📅 *${row.hari}*: ${buka} - ${tutup}`;
-        } else {
-          return `📅 *${row.hari}*: ❌ *Tutup*`;
-        }
-      }).join("\n");
-    
-      const namaToko = await getLoadNamaToko(userId);
-    
-      const pesan =
-        `🕐 *Jam Operasional ${namaToko}*\n` +
-        `Berikut adalah jadwal buka toko:\n\n` +
-        `${daftar}\n\n` +
-        `📌 Jadwal dapat berubah sewaktu-waktu.`;
-    
-      return await sock.sendMessage(sender, { text: pesan });
-    }
-
-    if (text.startsWith("/cariproduk")) {
-      const kata = text.replace("/cariproduk", "").trim().toLowerCase();
-    
-      if (!kata) {
-        return await sock.sendMessage(sender, {
-          text: "🔍 Contoh: /cariproduk oli"
-        });
-      }
-    
-      const produk = await getCariProduk(userId, kata);
-    
-      if (produk.length === 0) {
-        return await sock.sendMessage(sender, {
-          text: `🔍 Produk dengan kata "${kata}" tidak ditemukan.`
-        });
-      }
-    
-      const daftar = produk.map((p, i) =>
-        `${i + 1}. *${p.nama}*\n` +
-        `Kategori: ${p.kategori}\n` +
-        `Merek: ${p.merek}\n` +
-        `Stok: ${p.stok}\n` +
-        `Harga: ${Number(p.harga_jual).toLocaleString()}`
-      ).join("\n\n");
-    
-      const pesan =
-        `🔍 *Hasil Pencarian Produk: "${kata}" (${produk.length} ditemukan)*\n\n` +
-        daftar;
-    
-      return await sock.sendMessage(sender, { text: pesan });
-    }
-
-    if (text.startsWith("/carikategori")) {
-      const kata = text.replace("/carikategori", "").trim().toLowerCase();
-    
-      if (!kata) {
-        return await sock.sendMessage(sender, {
-          text: "📂 Contoh: /carikategori oli"
-        });
-      }
-    
-      const kategori = await getCariKategori(userId, kata);
-    
-      if (kategori.length === 0) {
-        return await sock.sendMessage(sender, {
-          text: `🔍 Kategori dengan kata "${kata}" tidak ditemukan.`
-        });
-      }
-    
-      const daftar = kategori
-        .map((k, i) => `${i + 1}. ${k.nama}`)
-        .join("\n");
-    
-      const pesan =
-        `📂 *Hasil Pencarian Kategori: "${kata}" (${kategori.length} ditemukan)*\n\n` +
-        daftar;
-    
-      return await sock.sendMessage(sender, { text: pesan });
-    }
-
-    if (text.startsWith("/carimerek")) {
-      const kata = text.replace("/carimerek", "").trim().toLowerCase();
-    
-      if (!kata) {
-        return await sock.sendMessage(sender, {
-          text: "🏷️ Contoh: /carimerek honda"
-        });
-      }
-    
-      const merek = await getCariMerek(userId, kata);
-    
-      if (merek.length === 0) {
-        return await sock.sendMessage(sender, {
-          text: `🔍 Merek dengan kata "${kata}" tidak ditemukan.`
-        });
-      }
-    
-      const daftar = merek
-        .map((m, i) => `${i + 1}. ${m.nama}`)
-        .join("\n");
-    
-      const pesan =
-        `🏷️ *Hasil Pencarian Merek: "${kata}" (${merek.length} ditemukan)*\n\n` +
-        daftar;
-    
-      return await sock.sendMessage(sender, { text: pesan });
-    }
-
-    if (text.startsWith("/rekomendasiproduk")) {
-      const produk = await getRekomendasiProduk(userId);
-    
-      if (produk.length === 0) {
-        return await sock.sendMessage(sender, {
-          text: "❌ Belum ada data pembelian bulan ini."
-        });
-      }
-    
-      let pesan = produk.length < 3
-        ? `📊 *Hanya ${produk.length} produk terjual bulan ini*\n\n`
-        : `🔥 *10 Produk Terlaris Bulan Ini*\n\n`;
-    
-      pesan += produk.map((p, i) =>
-        `${i + 1}. *${p.nama}*\n` +
-        `Terjual: ${p.total_terjual}x\n` +
-        `Stok: ${p.stok} | ${p.kategori} • ${p.merek}\n` +
-        `Harga: ${Number(p.harga_jual).toLocaleString()}\n`
-      ).join("\n\n");
-    
-      return await sock.sendMessage(sender, { text: pesan });
+      console.log("✅ CONNECTED");
+      FORCE_NEW = false; // setelah login, pakai MongoDB lagi
     }
   });
 }
